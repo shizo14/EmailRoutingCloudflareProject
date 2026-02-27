@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CF Email Manager — Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: #060612;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 10% 20%, #1a0533 0%, transparent 50%),
+                  radial-gradient(ellipse at 90% 80%, #0d1f4a 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 50%, #0a1a2a 0%, transparent 70%),
+                  #060612;
+    }
+
+    .orb { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.3; z-index: 0; animation: float 10s ease-in-out infinite; }
+    .orb-1 { width: 500px; height: 500px; background: #7c3aed; top: -20%; left: -15%; }
+    .orb-2 { width: 400px; height: 400px; background: #1d4ed8; bottom: -10%; right: -10%; animation-delay: -4s; }
+
+    @keyframes float { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-20px)} }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 64px;
+      background: rgba(6,6,18,0.7);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-icon { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg,#7c3aed,#2563eb); display:flex;align-items:center;justify-content:center;font-size:16px; }
+    .nav-title { font-size: 16px; font-weight: 600; }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-zone { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 6px 14px; font-size: 13px; color: rgba(255,255,255,0.6); }
+    .nav-zone span { color: #fff; font-weight: 500; }
+    .logout-btn { padding: 7px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .logout-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+    /* MAIN */
+    main { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+    h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .subtitle { color: rgba(255,255,255,0.45); font-size: 15px; margin-bottom: 40px; }
+
+    /* STATS */
+    .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      padding: 20px 24px; border-radius: 20px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg,rgba(255,255,255,0.05) 0%,transparent 60%); }
+    .stat-label { color: rgba(255,255,255,0.45); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-sub { color: rgba(255,255,255,0.35); font-size: 12px; margin-top: 4px; }
+
+    /* PANEL */
+    .panel {
+      border-radius: 24px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(30px);
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .panel-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+    .panel-icon { width: 30px; height: 30px; border-radius: 8px; display:flex;align-items:center;justify-content:center;font-size:14px; }
+    .icon-purple { background: rgba(124,58,237,0.25); }
+    .icon-blue { background: rgba(37,99,235,0.25); }
+
+    /* ADD FORM */
+    .add-form {
+      display: flex; gap: 12px; padding: 20px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-wrap: wrap;
+    }
+
+    .form-group { flex: 1; min-width: 180px; }
+    .form-group label { display:block; color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 11px 14px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
+      color: #fff; font-size: 14px; outline: none;
+      transition: all 0.2s;
+    }
+    .form-group input::placeholder { color: rgba(255,255,255,0.25); }
+    .form-group input:focus, .form-group select:focus {
+      border-color: rgba(124,58,237,0.5);
+      background: rgba(124,58,237,0.08);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+    }
+    .form-group select option { background: #1a1a2e; color: #fff; }
+
+    .add-btn {
+      padding: 11px 20px; border-radius: 12px;
+      border: none; background: linear-gradient(135deg,#7c3aed,#2563eb);
+      color: #fff; font-size: 14px; font-weight: 600;
+      cursor: pointer; align-self: flex-end; white-space: nowrap;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+    }
+    .add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+    .add-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* TABLE */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { }
+    th { text-align: left; padding: 12px 24px; color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    td { padding: 14px 24px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    }
+    .badge-green { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+    .badge-yellow { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+    .badge-red { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .del-btn { padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.2); background: rgba(239,68,68,0.08); color: #f87171; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+    .del-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); }
+
+    .empty { padding: 40px; text-align: center; color: rgba(255,255,255,0.25); font-size: 14px; }
+
+    /* ALERT */
+    .alert {
+      position: fixed; top: 20px; right: 20px; z-index: 1000;
+      padding: 14px 20px; border-radius: 14px;
+      backdrop-filter: blur(20px);
+      font-size: 14px; font-weight: 500;
+      transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 340px;
+    }
+    .alert.show { transform: translateX(0); }
+    .alert-success { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.25); color: #34d399; }
+    .alert-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
+
+    /* SETUP BANNER */
+    .setup-banner {
+      padding: 20px 24px; display: flex; align-items: flex-start; gap: 14px;
+      background: rgba(245,158,11,0.06); border-bottom: 1px solid rgba(245,158,11,0.1);
+    }
+    .setup-banner-icon { font-size: 20px; margin-top: 2px; }
+    .setup-banner h3 { font-size: 14px; font-weight: 600; color: #fbbf24; margin-bottom: 6px; }
+    .setup-banner p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+    .setup-banner code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 5px; font-size: 12px; color: rgba(255,255,255,0.7); }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-icon">✉️</div>
+      <span class="nav-title">EmailRouter</span>
+    </div>
+    <div class="nav-right">
+      <div class="nav-zone">Zone: <span id="zoneName">Loading…</span></div>
+      <button class="logout-btn" onclick="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <main>
+    <h1>Email Routing</h1>
+    <p class="subtitle">Manage Cloudflare Email Routing rules for your domain</p>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total Rules</div>
+        <div class="stat-value" id="totalRules">—</div>
+        <div class="stat-sub">Email routes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Rules</div>
+        <div class="stat-value" id="activeRules">—</div>
+        <div class="stat-sub">Currently routing</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Destinations</div>
+        <div class="stat-value" id="totalDest">—</div>
+        <div class="stat-sub">Verified addresses</div>
+      </div>
+    </div>
+
+    <!-- Email Routing Rules Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="panel-icon icon-purple">📨</div>
+          Routing Rules
+        </div>
+      </div>
+
+      <div class="setup-banner" id="setupBanner" style="display:none;">
+        <div class="setup-banner-icon">⚠️</div>
+        <div>
+          <h3>Setup Required</h3>
+          <p>Set <code>CF_API_TOKEN</code>, <code>CF_ZONE_ID</code>, and <code>CF_ACCOUNT_ID</code> in your Cloudflare Pages environment variables to connect to the real API.</p>
+        </div>
+      </div>
+
+      <div class="add-form">
+        <div class="form-group">
+          <label>From Address</label>
+          <input type="email" id="fromAddr" placeholder="alias@yourdomain.com">
+        </div>
+        <div class="form-group">
+          <label>To Address</label>
+          <input type="email" id="toAddr" placeholder="you@gmail.com">
+        </div>
+        <div class="form-group" style="max-width:130px;">
+          <label>Type</label>
+          <select id="ruleType">
+            <option value="literal">Literal</option>
+            <option value="all">Catch-All</option>
+          </select>
+        </div>
+        <button class="add-btn" id="addRuleBtn" onclick="addRule()">+ Add Rule</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>To</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rulesBody">
+            <tr><td colspan="5" class="empty">Loading rules…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Destinations Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="panel-icon icon-blue">📬</div>
+          Destination Addresses
+        </div>
+      </div>
+
+      <div class="add-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="destAddr" placeholder="destination@gmail.com">
+        </div>
+        <button class="add-btn" id="addDestBtn" onclick="addDestination()">+ Add Destination</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Address</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="destBody">
+            <tr><td colspan="4" class="empty">Loading destinations…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="alert" id="alert"></div>
+
+  <script>
+    let rules = [], destinations = [];
+
+    async function apiFetch(path, opts = {}) {
+      const res = await fetch(path, { ...opts, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+      if (res.status === 401) { window.location.href = '/'; return null; }
+      return res.json();
+    }
+
+    function showAlert(msg, type = 'success') {
+      const el = document.getElementById('alert');
+      el.className = `alert alert-${type} show`;
+      el.textContent = msg;
+      setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    async function loadAll() {
+      const [infoRes, rulesRes, destRes] = await Promise.all([
+        apiFetch('/api/cf/zone-info'),
+        apiFetch('/api/cf/rules'),
+        apiFetch('/api/cf/destinations'),
+      ]);
+
+      if (infoRes) {
+        document.getElementById('zoneName').textContent = infoRes.zoneName || infoRes.zoneId || 'Unknown';
+        if (infoRes.needsSetup) document.getElementById('setupBanner').style.display = 'flex';
+      }
+
+      if (rulesRes) {
+        rules = rulesRes.rules || [];
+        renderRules();
+        document.getElementById('totalRules').textContent = rules.length;
+        document.getElementById('activeRules').textContent = rules.filter(r => r.enabled).length;
+      }
+
+      if (destRes) {
+        destinations = destRes.destinations || [];
+        renderDestinations();
+        document.getElementById('totalDest').textContent = destinations.length;
+      }
+    }
+
+    function renderRules() {
+      const tbody = document.getElementById('rulesBody');
+      if (!rules.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No rules yet. Add one above.</td></tr>'; return; }
+      tbody.innerHTML = rules.map(r => `
+        <tr>
+          <td>${escHtml(r.matchers?.[0]?.value || r.from || '—')}</td>
+          <td>${escHtml(r.actions?.[0]?.value?.[0] || r.to || '—')}</td>
+          <td><span style="color:rgba(255,255,255,0.6);font-size:13px">${r.matchers?.[0]?.type || 'literal'}</span></td>
+          <td>${r.enabled ? '<span class="badge badge-green"><span class="dot"></span>Active</span>' : '<span class="badge badge-yellow"><span class="dot"></span>Inactive</span>'}</td>
+          <td><button class="del-btn" onclick="deleteRule('${r.tag || r.id}')">Remove</button></td>
+        </tr>`).join('');
+    }
+
+    function renderDestinations() {
+      const tbody = document.getElementById('destBody');
+      if (!destinations.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">No destinations yet. Add one above.</td></tr>'; return; }
+      tbody.innerHTML = destinations.map(d => `
+        <tr>
+          <td>${escHtml(d.email)}</td>
+          <td>${d.verified ? '<span class="badge badge-green"><span class="dot"></span>Verified</span>' : '<span class="badge badge-yellow"><span class="dot"></span>Pending</span>'}</td>
+          <td style="color:rgba(255,255,255,0.4);font-size:13px">${d.created ? new Date(d.created).toLocaleDateString() : '—'}</td>
+          <td><button class="del-btn" onclick="deleteDestination('${d.tag || d.id}')">Remove</button></td>
+        </tr>`).join('');
+    }
+
+    async function addRule() {
+      const from = document.getElementById('fromAddr').value.trim();
+      const to = document.getElementById('toAddr').value.trim();
+      const type = document.getElementById('ruleType').value;
+      if (!from || !to) { showAlert('Fill in both From and To fields', 'error'); return; }
+
+      const btn = document.getElementById('addRuleBtn');
+      btn.disabled = true; btn.textContent = 'Adding…';
+
+      const res = await apiFetch('/api/cf/rules', {
+        method: 'POST',
+        body: JSON.stringify({ from, to, type })
+      });
+
+      btn.disabled = false; btn.textContent = '+ Add Rule';
+
+      if (res?.ok) {
+        document.getElementById('fromAddr').value = '';
+        document.getElementById('toAddr').value = '';
+        showAlert('Rule added successfully!');
+        await loadAll();
+      } else {
+        showAlert(res?.error || 'Failed to add rule', 'error');
+      }
+    }
+
+    async function deleteRule(id) {
+      if (!confirm('Delete this rule?')) return;
+      const res = await apiFetch(`/api/cf/rules/${id}`, { method: 'DELETE' });
+      if (res?.ok) { showAlert('Rule deleted'); await loadAll(); }
+      else showAlert(res?.error || 'Failed to delete', 'error');
+    }
+
+    async function addDestination() {
+      const email = document.getElementById('destAddr').value.trim();
+      if (!email) { showAlert('Enter an email address', 'error'); return; }
+
+      const btn = document.getElementById('addDestBtn');
+      btn.disabled = true; btn.textContent = 'Adding…';
+
+      const res = await apiFetch('/api/cf/destinations', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+
+      btn.disabled = false; btn.textContent = '+ Add Destination';
+
+      if (res?.ok) {
+        document.getElementById('destAddr').value = '';
+        showAlert('Destination added! A verification email has been sent.');
+        await loadAll();
+      } else {
+        showAlert(res?.error || 'Failed to add destination', 'error');
+      }
+    }
+
+    async function deleteDestination(id) {
+      if (!confirm('Remove this destination?')) return;
+      const res = await apiFetch(`/api/cf/destinations/${id}`, { method: 'DELETE' });
+      if (res?.ok) { showAlert('Destination removed'); await loadAll(); }
+      else showAlert(res?.error || 'Failed to delete', 'error');
+    }
+
+    async function logout() {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = '/';
+    }
+
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    loadAll();
+  </script>
+</body>
+</html>
